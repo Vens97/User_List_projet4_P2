@@ -30,3 +30,25 @@ struct UserListRepository {
         return response.results.map(User.init)
     }
 }
+
+extension URLRequest {
+    enum HTTPMethod: String {
+        case GET, POST, PUT, DELETE, PATCH
+    }
+
+    init(url: URL, method: HTTPMethod, parameters: [String: Any] = [:]) throws {
+        self.init(url: url)
+        self.httpMethod = method.rawValue
+        if method == .GET {
+            let urlComponents = NSURLComponents(url: url, resolvingAgainstBaseURL: false)
+            urlComponents?.queryItems = parameters.map { key, value in
+                URLQueryItem(name: key, value: "\(value)")
+            }
+            if let urlWithQuery = urlComponents?.url {
+                self.url = urlWithQuery
+            }
+        } else {
+            self.httpBody = try JSONSerialization.data(withJSONObject: parameters, options: [])
+        }
+    }
+}

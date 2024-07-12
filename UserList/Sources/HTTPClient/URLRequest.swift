@@ -7,23 +7,28 @@ extension URLRequest {
         parameters: [String: Any]? = nil,
         headers: [String: String]? = nil
     ) throws {
+        // Vérifie si l'URL fournie est valide
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             throw URLError(.badURL)
         }
 
+        // Initialise l'URLRequest avec l'URL fournie
         self.init(url: url)
 
+        // Définit la méthode HTTP (GET, POST, PUT, DELETE, PATCH)
         httpMethod = method.rawValue
 
+        // Encode les paramètres dans l'URL ou le corps de la requête selon la méthode HTTP
         if let parameters = parameters {
             switch method {
             case .GET:
                 encodeParametersInURL(parameters, components: components)
-            case .POST:
+            case .POST, .PUT, .DELETE, .PATCH:
                 try encodeParametersInBody(parameters)
             }
         }
 
+        // Ajoute les en-têtes personnalisés
         if let headers = headers {
             for (key, value) in headers {
                 setValue(value, forHTTPHeaderField: key)
@@ -31,6 +36,7 @@ extension URLRequest {
         }
     }
 
+    // Encode les paramètres dans l'URL pour les requêtes GET
     private mutating func encodeParametersInURL(
         _ parameters: [String: Any],
         components: URLComponents
@@ -42,6 +48,7 @@ extension URLRequest {
         url = components.url
     }
 
+    // Encode les paramètres dans le corps de la requête pour les requêtes POST, PUT, DELETE, PATCH
     private mutating func encodeParametersInBody(
         _ parameters: [String: Any]
     ) throws {
