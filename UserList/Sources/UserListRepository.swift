@@ -10,7 +10,7 @@ struct UserListRepository {
         self.executeDataRequest = executeDataRequest
     }
 
-    func fetchUsers(quantity: Int) async throws -> [User] {
+        func fetchUsers(quantity: Int) async throws -> [User] {
         guard let url = URL(string: "https://randomuser.me/api/") else {
             throw URLError(.badURL)
         }
@@ -30,6 +30,8 @@ struct UserListRepository {
         return response.results.map(User.init)
     }
 }
+
+
 
 extension URLRequest {
     enum HTTPMethod: String {

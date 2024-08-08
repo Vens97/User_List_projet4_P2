@@ -8,18 +8,19 @@ class UserListViewModel: ObservableObject {
 
     private let repository: UserListRepository
     private var cancellables = Set<AnyCancellable>()
-    
+
+    // Constructeur qui prend un dépôt comme paramètre
     init(repository: UserListRepository = UserListRepository()) {
         self.repository = repository
     }
-    
+
     func fetchUsers() {
         isLoading = true
         Task {
             do {
-                let users = try await repository.fetchUsers(quantity: 20)
+                let fetchedUsers = try await repository.fetchUsers(quantity: 20)
                 DispatchQueue.main.async {
-                    self.users.append(contentsOf: users)
+                    self.users.append(contentsOf: fetchedUsers) // Ajoute les utilisateurs à la liste
                     self.isLoading = false
                 }
             } catch {
@@ -32,8 +33,8 @@ class UserListViewModel: ObservableObject {
     }
 
     func reloadUsers() {
-        users.removeAll()
-        fetchUsers()
+        users.removeAll() // Efface les utilisateurs actuels
+        fetchUsers() // Charge de nouveaux utilisateurs
     }
 
     func shouldLoadMoreData(currentItem item: User) -> Bool {
