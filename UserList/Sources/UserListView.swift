@@ -32,7 +32,9 @@ struct UserListView: View {
                     }
                     .onAppear {
                         if viewModel.shouldLoadMoreData(currentItem: user) {
-                            viewModel.fetchUsers()
+                            Task {
+                                await viewModel.fetchUsers()
+                            }
                         }
                     }
                 }
@@ -51,7 +53,9 @@ struct UserListView: View {
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(action: {
-                            viewModel.reloadUsers()
+                            Task {
+                                await viewModel.reloadUsers()
+                            }
                         }) {
                             Image(systemName: "arrow.clockwise")
                                 .imageScale(.large)
@@ -83,7 +87,9 @@ struct UserListView: View {
                             }
                             .onAppear {
                                 if viewModel.shouldLoadMoreData(currentItem: user) {
-                                    viewModel.fetchUsers()
+                                    Task {
+                                        await viewModel.fetchUsers()
+                                    }
                                 }
                             }
                         }
@@ -104,7 +110,9 @@ struct UserListView: View {
                     }
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button(action: {
-                            viewModel.reloadUsers()
+                            Task {
+                                await viewModel.reloadUsers()
+                            }
                         }) {
                             Image(systemName: "arrow.clockwise")
                                 .imageScale(.large)
@@ -114,11 +122,12 @@ struct UserListView: View {
             }
         }
         .onAppear {
-            viewModel.fetchUsers()
+            Task {
+                await viewModel.fetchUsers()
+            }
         }
     }
 }
-
 
 struct UserListView_Previews: PreviewProvider {
     static var previews: some View {

@@ -24,6 +24,4 @@ struct User: Identifiable {
     struct Picture: Codable {
         let large, medium, thumbnail: String
     }
-    
-    
 }

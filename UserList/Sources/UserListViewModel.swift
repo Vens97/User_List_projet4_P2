@@ -1,44 +1,34 @@
 import Foundation
-import Combine
 
-class UserListViewModel: ObservableObject {
-    @Published var users: [User] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+@MainActor
+final class UserListViewModel: ObservableObject {
+    @Published private(set) var users: [User] = []
+    @Published private(set) var isLoading: Bool = false
+    @Published var errorMessage: String? = nil
 
     private let repository: UserListRepository
-    private var cancellables = Set<AnyCancellable>()
 
-    // Constructeur qui prend un dépôt comme paramètre
     init(repository: UserListRepository = UserListRepository()) {
         self.repository = repository
     }
 
-    func fetchUsers() {
+    func fetchUsers() async {
         isLoading = true
-        Task {
-            do {
-                let fetchedUsers = try await repository.fetchUsers(quantity: 20)
-                DispatchQueue.main.async {
-                    self.users.append(contentsOf: fetchedUsers) // Ajoute les utilisateurs à la liste
-                    self.isLoading = false
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.isLoading = false
-                    self.errorMessage = error.localizedDescription
-                }
-            }
+        errorMessage = nil
+        
+        do {
+            let newUsers = try await repository.fetchUsers(quantity: 20)
+            self.users = newUsers
+        } catch {
+            self.errorMessage = error.localizedDescription
         }
+        
+        isLoading = false
     }
 
     func reloadUsers() {
-        users.removeAll() // Efface les utilisateurs actuels
-        fetchUsers() // Charge de nouveaux utilisateurs
-    }
-
-    func shouldLoadMoreData(currentItem item: User) -> Bool {
-        guard let lastItem = users.last else { return false }
-        return !isLoading && item.id == lastItem.id
+        Task {
+            await fetchUsers()
+        }
     }
 }
