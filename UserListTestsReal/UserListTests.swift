@@ -117,4 +117,72 @@ final class UserListViewModelTests: XCTestCase {
       // Then
       XCTAssertEqual(viewModel.users.count, 0)
   }
+    
+    func testFetchUsersEmptyResponse() async throws {
+        // Given
+        let mockEmptyResponse: (URLRequest) async throws -> (Data, URLResponse) = { request in
+            let mockResponse = UserListResponse(results: [])
+            let data = try JSONEncoder().encode(mockResponse)
+            let urlResponse = URLResponse(url: request.url!, mimeType: nil, expectedContentLength: data.count, textEncodingName: nil)
+            return (data, urlResponse)
+        }
+        mockRepository = UserListRepository(executeDataRequest: mockEmptyResponse)
+        viewModel = UserListViewModel(repository: mockRepository)
+        
+        // When
+        let expectation = self.expectation(description: "Fetch users with empty response")
+        Task {
+            await viewModel.fetchUsers()
+            expectation.fulfill()
+        }
+        await fulfillment(of: [expectation], timeout: 2)
+
+        // Then
+        XCTAssertTrue(viewModel.users.isEmpty, "Expected users to be empty after fetch with empty response")
+        XCTAssertNil(viewModel.errorMessage, "Error message should be nil after fetch with empty response")
+    }
+    
+    func testFetchUsersFailureEdgeCase() async throws {
+        // Given
+        mockRepository = UserListRepository(executeDataRequest: mockExecuteDataRequestFailure)
+        viewModel = UserListViewModel(repository: mockRepository)
+        
+        // When
+        let expectation = self.expectation(description: "Fetch users failed with error")
+        Task {
+            await viewModel.fetchUsers()
+            expectation.fulfill()
+        }
+        await fulfillment(of: [expectation], timeout: 2)
+
+        // Then
+        XCTAssertTrue(viewModel.users.isEmpty, "Expected users to be empty after failed fetch")
+        XCTAssertNotNil(viewModel.errorMessage, "Expected error message to be set after failed fetch")
+    }
+
+    
+    func testReloadUsersAfterFailure() async throws {
+        // Given
+        mockRepository = UserListRepository(executeDataRequest: mockExecuteDataRequestFailure)
+        viewModel = UserListViewModel(repository: mockRepository)
+        await viewModel.fetchUsers() // simulate failure
+
+        // When
+        mockRepository = UserListRepository(executeDataRequest: mockExecuteDataRequest)
+        viewModel = UserListViewModel(repository: mockRepository)
+        
+        let expectation = self.expectation(description: "Reload users after failure")
+        Task {
+            await viewModel.reloadUsers()
+            expectation.fulfill()
+        }
+        await fulfillment(of: [expectation], timeout: 2)
+
+        // Then
+        XCTAssertFalse(viewModel.isLoading, "Expected isLoading to be false after reload")
+        XCTAssertEqual(viewModel.users.count, 2, "Expected users count to be 2 after successful reload")
+        XCTAssertNil(viewModel.errorMessage, "Error message should be nil after successful reload")
+    }
+
+
 }
