@@ -21,7 +21,11 @@ final class UserListViewModel: ObservableObject {
         
         do {
             let newUsers = try await repository.fetchUsers(quantity: pageSize)
-            self.users.append(contentsOf: newUsers)
+            if currentPage == 1 {
+                self.users = newUsers
+            } else {
+                self.users.append(contentsOf: newUsers)
+            }
             currentPage += 1
         } catch {
             self.errorMessage = error.localizedDescription
@@ -30,17 +34,13 @@ final class UserListViewModel: ObservableObject {
         isLoading = false
     }
 
-    func reloadUsers() {
-        Task {
-            currentPage = 1
-            users.removeAll()
-            await fetchUsers()
-        }
+    func reloadUsers() async {
+        currentPage = 1
+        users.removeAll()
+        await fetchUsers()
     }
 
     func shouldLoadMoreData(currentItem: User) -> Bool {
-        // Logic to determine if more data should be loaded
-        // For example, load more if we are near the end of the list
         guard !isLoading, let lastUser = users.last else { return false }
         return currentItem.id == lastUser.id
     }
